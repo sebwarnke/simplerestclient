@@ -22,10 +22,16 @@ public class Response<T> {
 	
 	private List<T> resultList = new ArrayList<T>();
 
+	private final int status;
+	private final String statusText;
+	
 	public Response(HttpResponse<JsonNode> httpResponse, Class<T> clazz) throws IOException {
 		objectMapper = new ObjectMapper();
 		JsonNode bodyJsonNode = httpResponse.getBody();
 		this.clazz = clazz;
+		
+		this.status = httpResponse.getStatus();
+		this.statusText = httpResponse.getStatusText();
 		
 		resultList = parse(bodyJsonNode);
 	}
@@ -38,6 +44,9 @@ public class Response<T> {
 		JsonNode bodyJsonNode = httpResponse.getBody();
 		this.clazz = clazz;
 		
+		this.status = httpResponse.getStatus();
+		this.statusText = httpResponse.getStatusText();
+		
 		resultList = parse(bodyJsonNode);
 	}
 
@@ -47,6 +56,14 @@ public class Response<T> {
 
 	public T getSingleResult() {
 		return resultList.get(0);
+	}
+
+	public int getStatus() {
+		return status;
+	}
+
+	public String getStatusText() {
+		return statusText;
 	}
 
 	private List<T> parse(JsonNode bodyJsonNode) throws IOException {
