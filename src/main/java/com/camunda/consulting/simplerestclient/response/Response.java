@@ -13,60 +13,51 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 
-public class Response<T> {
+public class Response {
 
 	private static final Logger log = LoggerFactory.getLogger(Response.class);
 	
-	private final ObjectMapper objectMapper;
-	private final Class<T> clazz;
+	private final HttpResponse<JsonNode> httpResponse;
 	
-	private List<T> resultList = new ArrayList<T>();
-
-	private final int status;
-	private final String statusText;
+	private ObjectMapper objectMapper = new ObjectMapper();
 	
-	public Response(HttpResponse<JsonNode> httpResponse, Class<T> clazz) throws IOException {
-		objectMapper = new ObjectMapper();
-		JsonNode bodyJsonNode = httpResponse.getBody();
-		this.clazz = clazz;
-		
-		this.status = httpResponse.getStatus();
-		this.statusText = httpResponse.getStatusText();
-		
-		resultList = parse(bodyJsonNode);
+	public Response(HttpResponse<JsonNode> httpResponse) {
+		this.httpResponse = httpResponse;
 	}
 	
-	public Response(HttpResponse<JsonNode> httpResponse, ObjectMapper objectMapper, Class<T> clazz) throws IOException {
-
-		log.info("response will be parsed by custom object mapper");
-		this.objectMapper = objectMapper;
+	public <T> List<T> getResults(Class<T> resultType) {
 		
-		JsonNode bodyJsonNode = httpResponse.getBody();
-		this.clazz = clazz;
+		JsonNode body = httpResponse.getBody();
 		
-		this.status = httpResponse.getStatus();
-		this.statusText = httpResponse.getStatusText();
+		List<T> resultList = new ArrayList<T>();
 		
-		resultList = parse(bodyJsonNode);
-	}
-
-	public List<T> getResults() {
+		try {
+			resultList = parse(body, resultType);
+		} catch (IOException e) {
+			log.error("cannot unmarshall response to type <"+ resultType.getSimpleName() +">", e);
+		}
+		
 		return resultList;
 	}
 
-	public T getSingleResult() {
+	public <T> T getSingleResult(Class<T> resultType) {
+		List<T> resultList = getResults(resultType);
 		return resultList.get(0);
 	}
 
 	public int getStatus() {
-		return status;
+		return httpResponse.getStatus();
 	}
 
 	public String getStatusText() {
-		return statusText;
+		return httpResponse.getStatusText();
 	}
 
-	private List<T> parse(JsonNode bodyJsonNode) throws IOException {
+	public void setObjectMapper(ObjectMapper objectMapper) {
+		this.objectMapper = objectMapper;
+	}
+
+	private <T> List<T> parse(JsonNode bodyJsonNode, Class<T> returnType) throws IOException {
 
 		List<T> result = new ArrayList<T>();
 		
@@ -75,20 +66,20 @@ public class Response<T> {
 			
 			for (int i = 0; i < jsonArray.length(); i++) {
 				JSONObject jsonObject = jsonArray.getJSONObject(i);
-				T resultObject = unmarshall(jsonObject);
+				T resultObject = unmarshall(jsonObject, returnType);
 				result.add(resultObject);
 			}
 			
 		} else {
 			JSONObject bodyJsonObject = bodyJsonNode.getObject();
-			T resultObject = unmarshall(bodyJsonObject);
+			T resultObject = unmarshall(bodyJsonObject, returnType);
 			result.add(resultObject);
 		}
 		
 		return result;
 	}
 
-	private T unmarshall(JSONObject bodyJsonObject) throws IOException {
+	private <T> T unmarshall(JSONObject bodyJsonObject, Class<T> clazz) throws IOException {
 		
 		T result;
 		
