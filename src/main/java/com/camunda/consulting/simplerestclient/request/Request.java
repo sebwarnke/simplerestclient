@@ -1,7 +1,9 @@
 package com.camunda.consulting.simplerestclient.request;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -10,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.camunda.consulting.simplerestclient.exceptions.RestClientException;
-import com.camunda.consulting.simplerestclient.model.Filter;
 import com.camunda.consulting.simplerestclient.response.Response;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
@@ -22,15 +23,21 @@ public abstract class Request {
 	protected static final Logger log = LoggerFactory.getLogger(Request.class);
 
 	protected String restUri;
-	protected String endPoint;
-	protected Filter filter;
+	protected final List<Resource> resources = new ArrayList<Resource>();
+	protected Map<String, String> parameters = new HashMap<String, String>();
 
 	private Map<String, String> headers = new HashMap<String, String>();
 
-	public Request(Filter filter, String restUri, String restEndPoint) {
-		this.filter = filter;
+	public Request(String restUri, String restEndPoint) {
 		this.restUri = restUri;
-		this.endPoint = restEndPoint;
+
+		this.resources.add(new Resource(restEndPoint));
+	}
+
+	public Request(String restUri, String restEndPoint, String resourceIdentifier) {
+		this.restUri = restUri;
+
+		this.resources.add(new Resource(restEndPoint).resourceDescriptor(resourceIdentifier));
 	}
 
 	protected abstract HttpRequest createRequest(String requestString) throws RestClientException;
@@ -49,13 +56,13 @@ public abstract class Request {
 			HttpRequest request = createRequest(requestString);
 			request.headers(headers);
 			httpResponse = request.asJson();
-			
+
 			result = new Response(httpResponse);
 
 		} catch (UnirestException e) {
 			throw new RestClientException("request failed: " + requestString, e);
 		}
-		
+
 		return result;
 	}
 
@@ -72,18 +79,30 @@ public abstract class Request {
 		this.headers = headers;
 	}
 
+	public Request restResource(Resource resource) {
+		resources.add(resource);
+		return this;
+	}
+	
+	public Request restParameter(String key, String value) {
+		this.parameters.put(key, value);
+		return this;
+	}
+	
+	public Request restParameters(Map<String, String> parameters) {
+		this.parameters = new HashMap<String, String>(parameters);
+		return this;
+	}
+
 	public String getRequestString() {
 
-		String requestString = restUri + endPoint;
+		String requestString = restUri;
 
-		if (filter == null) {
-			// request string stays uri + end point
-		} else if (filter.getId() == null || filter.getId().isEmpty()) {
-			// assemble filter uri parameters
-			requestString += convertMapToFilterString(filter.getParameters());
-		} else {
-			requestString += "/" + filter.getId();
+		for (Resource resource : resources) {
+			requestString += resource.toString();
 		}
+
+		requestString += convertMapToFilterString(parameters);
 
 		return requestString;
 	}

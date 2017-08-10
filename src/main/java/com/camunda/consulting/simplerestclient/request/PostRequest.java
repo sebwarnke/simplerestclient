@@ -5,7 +5,6 @@ import java.io.Serializable;
 import org.json.JSONObject;
 
 import com.camunda.consulting.simplerestclient.exceptions.RestClientException;
-import com.camunda.consulting.simplerestclient.model.Filter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mashape.unirest.http.Unirest;
@@ -16,13 +15,13 @@ public class PostRequest extends Request {
 	private ObjectMapper bodyMapper = new ObjectMapper();
 	private final Serializable body;
 	
-	public PostRequest(Filter filter, String restUri, String endPoint, Serializable body) {
-		super(filter, restUri, endPoint);
+	public PostRequest(String restUri, String endPoint, Serializable body) {
+		super(restUri, endPoint);
 		this.body = body;
 	}
 	
-	public PostRequest(String restUri, String endPoint, Serializable body) {
-		super(null, restUri, endPoint);
+	public PostRequest(String restUri, String endPoint, String resourceIdentifier, Serializable body) {
+		super(restUri, endPoint, resourceIdentifier);
 		this.body = body;
 	}
 	
