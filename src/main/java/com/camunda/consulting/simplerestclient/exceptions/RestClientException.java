@@ -1,6 +1,6 @@
 package com.camunda.consulting.simplerestclient.exceptions;
 
-public class RestClientException extends Exception {
+public class RestClientException extends RuntimeException {
 
 	/**
 	 * 

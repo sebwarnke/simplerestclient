@@ -1,5 +1,7 @@
 package com.camunda.consulting.simplerestclient.request;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -8,128 +10,114 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.MultivaluedMap;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.camunda.consulting.simplerestclient.exceptions.RestClientException;
-import com.camunda.consulting.simplerestclient.response.Response;
-import com.mashape.unirest.http.HttpResponse;
-import com.mashape.unirest.http.JsonNode;
-import com.mashape.unirest.http.exceptions.UnirestException;
-import com.mashape.unirest.request.HttpRequest;
+public class Request {
 
-public abstract class Request {
+  protected static final Logger log = LoggerFactory.getLogger(Request.class);
 
-	protected static final Logger log = LoggerFactory.getLogger(Request.class);
+  protected final List<Path> paths = new ArrayList<Path>();
+  protected Map<String, String> parameters = new HashMap<String, String>();
 
-	protected String restUri;
-	protected final List<Resource> resources = new ArrayList<Resource>();
-	protected Map<String, String> parameters = new HashMap<String, String>();
+  private MultivaluedMap<String, Object> headers = new MultivaluedHashMap<String, Object>();
 
-	private Map<String, String> headers = new HashMap<String, String>();
+  // private HttpClient customHttpClient = null;
 
-	public Request(String restUri, String restEndPoint) {
-		this.restUri = restUri;
+  public Request(String restEndPoint) {
+    this.paths.add(new Path(restEndPoint));
+  }
 
-		this.resources.add(new Resource(restEndPoint));
-	}
+  public Request(String restEndPoint, String resourceIdentifier) {
+    this.paths.add(new Path(restEndPoint, resourceIdentifier));
+  }
 
-	public Request(String restUri, String restEndPoint, String resourceIdentifier) {
-		this.restUri = restUri;
+  public Request addHeader(String key, String value) {
+    headers.add(key, value);
+    return this;
+  }
 
-		this.resources.add(new Resource(restEndPoint).resourceDescriptor(resourceIdentifier));
-	}
+  public void removeHeader(String key) {
+    headers.remove(key);
+  }
 
-	protected abstract HttpRequest createRequest(String requestString) throws RestClientException;
+  public void setHeaders(Map<String, Object> headers) {
+    this.headers = new MultivaluedHashMap<String, Object>(headers);
+  }
+  
+  public void setHeaders(MultivaluedMap<String, Object> headers) {
+    this.headers = headers;
+  }
+  
+  public MultivaluedMap<String, Object> getHeaders() {
+    return headers;
+  }
 
-	public Response submit() throws RestClientException {
+  public Request path(Path resource) {
+    paths.add(resource);
+    return this;
+  }
+ 
+  public Request path(String... elements) {
+    Path path = new Path(elements);
+    return this.path(path);
+  }
 
-		Response result = null;
+  public Request restParameter(String key, String value) {
+    this.parameters.put(key, value);
+    return this;
+  }
 
-		HttpResponse<JsonNode> httpResponse = null;
+  public Request restParameters(Map<String, String> parameters) {
+    this.parameters = new HashMap<String, String>(parameters);
+    return this;
+  }
 
-		String requestString = getRequestString();
+  public String getPath() {
 
-		log.info("submitting get request: {}", requestString);
+    String requestString = "";
 
-		try {
-			HttpRequest request = createRequest(requestString);
-			request.headers(headers);
-			httpResponse = request.asJson();
+    for (Path path : paths) {
+      requestString += path.toString();
+    }
+    
+    requestString += assembleParameters(parameters);
 
-			result = new Response(httpResponse);
+    return requestString;
+  }
 
-		} catch (UnirestException e) {
-			throw new RestClientException("request failed: " + requestString, e);
-		}
+  private String assembleParameters(Map<String, String> parameters) {
 
-		return result;
-	}
+    String result = "";
 
-	public Request addHeader(String key, String value) {
-		headers.put(key, value);
-		return this;
-	}
+    if (parameters.size() > 0) {
+      result += "?";
 
-	public void removeHeader(String key) {
-		headers.remove(key);
-	}
+      Set<Entry<String, String>> parameterEntrySet = parameters.entrySet();
+      Iterator<Entry<String, String>> parameterIterator = parameterEntrySet.iterator();
 
-	public void setHeaders(Map<String, String> headers) {
-		this.headers = headers;
-	}
+      while (parameterIterator.hasNext()) {
 
-	public Request restResource(Resource resource) {
-		resources.add(resource);
-		return this;
-	}
-	
-	public Request restParameter(String key, String value) {
-		this.parameters.put(key, value);
-		return this;
-	}
-	
-	public Request restParameters(Map<String, String> parameters) {
-		this.parameters = new HashMap<String, String>(parameters);
-		return this;
-	}
+        Entry<String, String> mapEntry = parameterIterator.next();
+        String parameterKeyValue = mapEntry.getKey() + "=" + mapEntry.getValue();
 
-	public String getRequestString() {
+        try {
+          result += URLEncoder.encode(parameterKeyValue, "utf-8");
+        } catch (UnsupportedEncodingException e) {
+          log.error("cannot url-encode parameter [{}]", parameterKeyValue, e);
+        }
 
-		String requestString = restUri;
+        if (parameterIterator.hasNext()) {
+          result += "&";
+        }
+      }
+    } else {
+      // parameters.size <= 0 -> no uri parameters
+    }
 
-		for (Resource resource : resources) {
-			requestString += resource.toString();
-		}
-
-		requestString += convertMapToFilterString(parameters);
-
-		return requestString;
-	}
-
-	private String convertMapToFilterString(Map<String, String> parameters) {
-
-		String result = "";
-
-		if (parameters.size() > 0) {
-			result += "?";
-
-			Set<Entry<String, String>> parameterEntrySet = parameters.entrySet();
-			Iterator<Entry<String, String>> parameterIterator = parameterEntrySet.iterator();
-
-			while (parameterIterator.hasNext()) {
-
-				Entry<String, String> mapEntry = parameterIterator.next();
-				String filterKeyValue = mapEntry.getKey() + "=" + mapEntry.getValue();
-				result += filterKeyValue;
-				if (parameterIterator.hasNext()) {
-					result += "&";
-				}
-			}
-		} else {
-			// parameters.size <= 0 -> no uri parameters
-		}
-
-		return result;
-	}
+    return result;
+  }
 }
