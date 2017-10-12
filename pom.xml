@@ -57,9 +57,9 @@
 	</dependencies>
 
 	<scm>
-		<url>https://github.com/sebwarnke/simplerestclient</url>
-		<connection>scm:git:git@github.com:camunda-consulting/office365connector.git</connection>
-		<developerConnection>scm:git:git@github.com:sebwarnke/simplerestclient</developerConnection>
+		<url>https://github.com/camunda-consulting/simplerestclient</url>
+		<connection>scm:git:git@github.com:camunda-consulting/simplerestclient.git</connection>
+		<developerConnection>scm:git:git@github.com:camunda-consulting/simplerestclient.git</developerConnection>
 		<tag>HEAD</tag>
 	</scm>
 
