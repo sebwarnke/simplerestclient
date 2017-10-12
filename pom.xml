@@ -17,7 +17,6 @@
 			<groupId>org.jboss.resteasy</groupId>
 			<artifactId>resteasy-client</artifactId>
 			<version>${resteasy.version}</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.jboss.resteasy</groupId>
@@ -28,7 +27,6 @@
 			<groupId>org.jboss.resteasy</groupId>
 			<artifactId>resteasy-jackson2-provider</artifactId>
 			<version>${resteasy.version}</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.json</groupId>
@@ -57,4 +55,22 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+
+	<scm>
+		<url>https://github.com/sebwarnke/simplerestclient</url>
+		<connection>scm:git:git@github.com:camunda-consulting/office365connector.git</connection>
+		<developerConnection>scm:git:git@github.com:sebwarnke/simplerestclient</developerConnection>
+		<tag>HEAD</tag>
+	</scm>
+
+	<distributionManagement>
+		<snapshotRepository>
+			<id>camunda-nexus</id>
+			<url>https://app.camunda.com/nexus/content/repositories/camunda-consulting-snapshots/</url>
+		</snapshotRepository>
+		<repository>
+			<id>camunda-nexus</id>
+			<url>https://app.camunda.com/nexus/content/repositories/camunda-consulting/</url>
+		</repository>
+	</distributionManagement>
 </project>
