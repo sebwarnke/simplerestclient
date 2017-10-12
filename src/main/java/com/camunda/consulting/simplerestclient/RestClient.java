@@ -1,6 +1,7 @@
 package com.camunda.consulting.simplerestclient;
 
 import java.io.Serializable;
+import java.util.Map;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -46,7 +47,11 @@ public class RestClient {
     headers.add(key, value);
     return this;
   }
-
+  
+  public void setHeaders(Map<String, Object> headers) {
+    this.headers = new MultivaluedHashMap<>(headers);
+  }
+  
   public Request newRequest(String endpoint) {
     Request request = new Request(endpoint);
     request.setHeaders(headers);
@@ -195,5 +200,4 @@ public class RestClient {
   public void setResponseMapper(ObjectMapper responseMapper) {
     this.responseMapper = responseMapper;
   }
-
 }
