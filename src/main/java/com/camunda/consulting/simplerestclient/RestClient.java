@@ -3,7 +3,9 @@ package com.camunda.consulting.simplerestclient;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.client.Client;
@@ -11,6 +13,7 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
@@ -24,6 +27,7 @@ import com.camunda.consulting.simplerestclient.request.RequestWithBody;
 import com.camunda.consulting.simplerestclient.request.RequestWithUrlEncodedData;
 import com.camunda.consulting.simplerestclient.response.Response;
 import com.camunda.consulting.simplerestclient.response.ResponseWithBody;
+import com.camunda.consulting.simplerestclient.util.CookieClientRequestFilter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,6 +44,7 @@ public class RestClient {
   private ObjectMapper responseMapper = null;
 
   private MultivaluedMap<String, Object> headers = new MultivaluedHashMap<String, Object>();
+  private List<Cookie> cookies = new ArrayList<Cookie>();
 
   public RestClient(String restUri) {
 
@@ -50,6 +55,12 @@ public class RestClient {
 
   public RestClient header(String key, String value) {
     headers.add(key, value);
+    return this;
+  }
+  
+  public RestClient cookie(String name, String value, String path, String domain) {
+    Cookie cookie = new Cookie(name, value, path, domain);
+    cookies.add(cookie);
     return this;
   }
 
@@ -204,6 +215,11 @@ public class RestClient {
   }
 
   private Builder createInvocationBuilder(Request request) {
+    
+    if (this.cookies.isEmpty() == false) {
+      this.client.register(new CookieClientRequestFilter(this.cookies));
+    }
+    
     WebTarget fullTarget = target.path(request.getPath());
     Builder builder = fullTarget.request();
 
