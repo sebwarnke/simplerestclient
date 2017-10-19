@@ -13,25 +13,66 @@ import org.slf4j.LoggerFactory;
 import com.camunda.consulting.simplerestclient.exceptions.RestClientException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * This class represents the response to a REST request. The response is
+ * expected to contain an entity body able to be unmarshalled.
+ * 
+ * @author Sebastian Warnke (sebastian.warnke@camunda.com)
+ *
+ * @param <T>
+ *          The type the entity body is to be unmarshalled to.
+ */
 public class ResponseWithBody<T extends Serializable> extends Response {
 
   private static final Logger log = LoggerFactory.getLogger(ResponseWithBody.class);
-  
-  private final Class<T> clazz;
+
+  /**
+   * The expected entity type.
+   */
+  private final Class<T> entityType;
+
+  /**
+   * The mapper that is used to unmarshall the entity body.
+   */
   private ObjectMapper objectMapper = new ObjectMapper();
-  
+
+  /**
+   * The response as String
+   */
   protected final String responseString;
+
+  /**
+   * The entity body.
+   */
   private final JsonEntity jsonEntity;
-  
-  public ResponseWithBody(javax.ws.rs.core.Response httpResponse, Class<T> clazz) {
-    
+
+  /**
+   * Constructor.
+   * 
+   * @param httpResponse
+   *          HTTP response received from REST API
+   * @param entityType
+   *          The type the entity body is to be unmarshalled to
+   */
+  public ResponseWithBody(javax.ws.rs.core.Response httpResponse, Class<T> entityType) {
+
     super(httpResponse);
-    
-    this.clazz = clazz;
+
+    this.entityType = entityType;
     this.responseString = httpResponse.readEntity(String.class);
     this.jsonEntity = new JsonEntity(this.responseString);
   }
-  
+
+  /**
+   * This parses a {@link JsonEntity} to a List of {@code <T>}-typed objects.
+   * 
+   * @param bodyJsonEntity
+   *          the entity to be parsed
+   * @return In case the entity provided contains a {@link JSONObject}, the list
+   *         contains a single element only. If the entity contains
+   *         {@link JSONArray} the list can have multiple elements.
+   * @throws IOException
+   */
   private List<T> parse(JsonEntity bodyJsonEntity) throws IOException {
 
     List<T> result = new ArrayList<T>();
@@ -57,47 +98,53 @@ public class ResponseWithBody<T extends Serializable> extends Response {
   private T unmarshall(JSONObject bodyJsonObject) throws IOException {
     T result;
     String jsonString = bodyJsonObject.toString();
-    result = objectMapper.readValue(jsonString, clazz);
+    result = objectMapper.readValue(jsonString, entityType);
     return result;
   }
 
+  /**
+   * @return List of {@code <T>}-typed objects representing the response entity. 
+   */
   public List<T> getResults() {
-  
+
     List<T> resultList = new ArrayList<T>();
-  
+
     try {
       resultList = parse(jsonEntity);
     } catch (IOException e) {
-      log.error("cannot unmarshall response to type <" + this.clazz.getSimpleName() + ">: {}", e.getMessage());
-      throw new RestClientException("cannot unmarshall response to type <" + this.clazz.getSimpleName() + ">", e);
+      log.error("cannot unmarshall response to type <" + this.entityType.getSimpleName() + ">: {}", e.getMessage());
+      throw new RestClientException("cannot unmarshall response to type <" + this.entityType.getSimpleName() + ">", e);
     }
-  
+
     return resultList;
   }
 
+  /**
+   * @return First {@code <T>}-typed element of response entity list. 
+   */
   public T getSingleResult() {
-    
+
     T result = null;
-    
+
     List<T> resultList = getResults();
-    
+
     if (resultList.size() > 1) {
       log.warn("returning first element from result list with more than 1 element");
-    
+
     } else if (resultList.size() < 1) {
       log.warn("response is empty");
-    
+
     } else {
       result = resultList.get(0);
     }
-    
+
     return result;
   }
-  
+
   public void setCustomMapper(ObjectMapper customMapper) {
     this.objectMapper = customMapper;
   }
-  
+
   public String getResponseString() {
     return responseString;
   }

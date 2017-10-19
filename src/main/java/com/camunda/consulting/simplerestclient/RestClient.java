@@ -32,20 +32,49 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * This is the Rest Client representation for requests to a certain REST API.
+ * 
+ * @author Sebastian Warnke (sebastian.warnke@camunda.com)
+ */
 public class RestClient {
 
   private static final Logger log = LoggerFactory.getLogger(RestClient.class);
 
   private final Client client;
-  private final String restUri;
   private final WebTarget target;
 
+  /**
+   * URI to the location of the REST API
+   */
+  private final String restUri;
+
+  /**
+   * Mapper to marhall requests. If not set a default mapper is being used.
+   */
   private ObjectMapper requestMapper = null;
+
+  /**
+   * Mapper to unmarshall responses. If not set a default mapper is being used.
+   */
   private ObjectMapper responseMapper = null;
 
+  /**
+   * Default headers sent during a request.
+   */
   private MultivaluedMap<String, Object> headers = new MultivaluedHashMap<String, Object>();
+
+  /**
+   * Cookies sent during a request.
+   */
   private List<Cookie> cookies = new ArrayList<Cookie>();
 
+  /**
+   * Constructor
+   * 
+   * @param restUri
+   *          URI to the location of the REST API
+   */
   public RestClient(String restUri) {
 
     this.client = ClientBuilder.newBuilder().build();
@@ -53,27 +82,72 @@ public class RestClient {
     this.target = client.target(this.restUri);
   }
 
+  /**
+   * This adds an header key value pair to the rest client's default headers.
+   * 
+   * @param key
+   * @param value
+   * @return this
+   */
   public RestClient header(String key, String value) {
     headers.add(key, value);
     return this;
   }
-  
+
+  /**
+   * This adds a cookie to the rest client's cookies.
+   * 
+   * @param name
+   *          the name of the cookie.
+   * @param value
+   *          the value of the cookie.
+   * @param path
+   *          the URI path for which the cookie is valid.
+   * @param domain
+   *          the host domain for which the cookie is valid
+   * @return this
+   */
   public RestClient cookie(String name, String value, String path, String domain) {
     Cookie cookie = new Cookie(name, value, path, domain);
     cookies.add(cookie);
     return this;
   }
 
+  /**
+   * Just a setter.
+   * 
+   * @param headers
+   */
   public void setHeaders(Map<String, Object> headers) {
     this.headers = new MultivaluedHashMap<>(headers);
   }
 
+  /**
+   * This creates an instance of {@link Request} and sets the default headers of
+   * the rest client.
+   * 
+   * @param endpoint
+   *          the URI path, relative to {@code restUri}, the request is to be
+   *          sent to.
+   * @return
+   */
   public Request newRequest(String endpoint) {
     Request request = new Request(endpoint);
     request.setHeaders(headers);
     return request;
   }
 
+  /**
+   * This creates an instance of {@link RequestWithBody} and sets the default
+   * headers of the rest client.
+   * 
+   * @param endpoint
+   *          the URI path, relative to {@code restUri}, the request is to be
+   *          sent to.
+   * @param body
+   *          the body which is to be sent in the request
+   * @return
+   */
   public RequestWithBody newRequestWithBody(String endpoint, Serializable body) {
     RequestWithBody request = new RequestWithBody(endpoint, body);
     request.setHeaders(headers);
@@ -85,6 +159,17 @@ public class RestClient {
     return request;
   }
 
+  /**
+   * This creates an instance of {@link RequestWithUrlEncodedData} and sets the
+   * default headers of the rest client.
+   * 
+   * @param endpoint
+   *          the URI path, relative to {@code restUri}, the request is to be
+   *          sent to.
+   * @param dataTemplate
+   *          the object which is used to be create URL-encoded data from.
+   * @return
+   */
   public RequestWithUrlEncodedData newRequestWithUrlEncodedData(String endpoint, Serializable dataTemplate) {
     RequestWithUrlEncodedData request = new RequestWithUrlEncodedData(endpoint);
     request.setHeaders(headers);
@@ -93,7 +178,7 @@ public class RestClient {
     for (Map.Entry<String, String> date : dataMap.entrySet()) {
       request.keyValuePair(date.getKey(), date.getValue());
     }
-    
+
     return request;
   }
 
@@ -107,7 +192,16 @@ public class RestClient {
     return response;
   }
 
-  public <T extends Serializable> ResponseWithBody<T> get(Request request, Class<T> returnType) {
+  /**
+   * This sends a GET request to the REST API located at {@code restUri}.
+   * 
+   * @param request
+   *          The request to be sent.
+   * @param entityType
+   *          The data type of the response's entity.
+   * @return a response object containing unmarshalled data
+   */
+  public <T extends Serializable> ResponseWithBody<T> get(Request request, Class<T> entityType) {
 
     ResponseWithBody<T> response = null;
 
@@ -117,7 +211,7 @@ public class RestClient {
     Builder builder = createInvocationBuilder(request);
 
     javax.ws.rs.core.Response httpResponse = builder.get();
-    response = new ResponseWithBody<T>(httpResponse, returnType);
+    response = new ResponseWithBody<T>(httpResponse, entityType);
 
     if (responseMapper != null) {
       response.setCustomMapper(responseMapper);
@@ -126,6 +220,13 @@ public class RestClient {
     return response;
   }
 
+  /**
+   * This sends a POST request to the REST API located at {@code restUri}.
+   * 
+   * @param request
+   *          The request to be sent.
+   * @return a response object
+   */
   public Response post(RequestWithBody request) {
     javax.ws.rs.core.Response httpResponse = invokePost(request);
     Response response = new Response(httpResponse);
@@ -133,6 +234,13 @@ public class RestClient {
     return response;
   }
 
+  /**
+   * This sends a POST request to the REST API located at {@code restUri}.
+   * 
+   * @param request
+   *          The request to be sent.
+   * @return a response object
+   */
   public Response post(RequestWithUrlEncodedData request) {
     Builder builder = createInvocationBuilder(request);
     javax.ws.rs.core.Response httpResponse = builder.post(Entity.entity(request.getUrlEncodedData(), MediaType.APPLICATION_FORM_URLENCODED_TYPE));
@@ -141,17 +249,35 @@ public class RestClient {
     return response;
   }
 
-  public <T extends Serializable> ResponseWithBody<T> post(RequestWithUrlEncodedData request, Class<T> returnType) {
+  /**
+   * This sends a GET request to the REST API located at {@code restUri}.
+   * 
+   * @param request
+   *          The request to be sent.
+   * @param entityType
+   *          The data type of the response's entity.
+   * @return a response object containing unmarshalled data
+   */
+  public <T extends Serializable> ResponseWithBody<T> post(RequestWithUrlEncodedData request, Class<T> entityType) {
     Builder builder = createInvocationBuilder(request);
     javax.ws.rs.core.Response httpResponse = builder.post(Entity.entity(request.getUrlEncodedData(), MediaType.APPLICATION_FORM_URLENCODED_TYPE));
-    ResponseWithBody<T> response = new ResponseWithBody<T>(httpResponse, returnType);
+    ResponseWithBody<T> response = new ResponseWithBody<T>(httpResponse, entityType);
 
     return response;
   }
 
-  public <T extends Serializable> ResponseWithBody<T> post(RequestWithBody request, Class<T> returnType) {
+  /**
+   * This sends a GET request to the REST API located at {@code restUri}.
+   * 
+   * @param request
+   *          The request to be sent.
+   * @param entityType
+   *          The data type of the response's entity.
+   * @return a response object containing unmarshalled data
+   */
+  public <T extends Serializable> ResponseWithBody<T> post(RequestWithBody request, Class<T> entityType) {
     javax.ws.rs.core.Response httpResponse = invokePost(request);
-    ResponseWithBody<T> response = newResponseWithBody(httpResponse, returnType);
+    ResponseWithBody<T> response = newResponseWithBody(httpResponse, entityType);
 
     return response;
   }
@@ -177,6 +303,13 @@ public class RestClient {
     return httpResponse;
   }
 
+  /**
+   * This sends a PUT request to the REST API located at {@code restUri}.
+   * 
+   * @param request
+   *          The request to be sent.
+   * @return a response object
+   */
   public Response put(Request request) {
 
     Response response = null;
@@ -192,6 +325,13 @@ public class RestClient {
     return response;
   }
 
+  /**
+   * This sends a PUT request to the REST API located at {@code restUri}.
+   * 
+   * @param request
+   *          The request to be sent.
+   * @return a response object
+   */
   public Response put(RequestWithBody request) {
 
     Response response = null;
@@ -215,11 +355,11 @@ public class RestClient {
   }
 
   private Builder createInvocationBuilder(Request request) {
-    
+
     if (this.cookies.isEmpty() == false) {
       this.client.register(new CookieClientRequestFilter(this.cookies));
     }
-    
+
     WebTarget fullTarget = target.path(request.getPath());
     Builder builder = fullTarget.request();
 

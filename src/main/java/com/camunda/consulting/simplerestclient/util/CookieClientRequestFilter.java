@@ -13,6 +13,13 @@ import javax.ws.rs.client.ClientRequestFilter;
 import javax.ws.rs.core.Cookie;
 import javax.ws.rs.ext.Provider;
 
+/**
+ * This class is used to get use of cookies working.
+ * 
+ * @author Sebastian Warnke (sebastian.warnke@camunda.com)
+ *
+ * @see https://stackoverflow.com/questions/23358105/how-to-set-cookie-for-requests-built-via-resteasy-client-api
+ */
 @Provider
 public class CookieClientRequestFilter implements ClientRequestFilter {
   private List<Object> cookies;
