@@ -18,7 +18,6 @@ import javax.ws.rs.ext.Provider;
  * 
  * @author Sebastian Warnke (sebastian.warnke@camunda.com)
  *
- * @see https://stackoverflow.com/questions/23358105/how-to-set-cookie-for-requests-built-via-resteasy-client-api
  */
 @Provider
 public class CookieClientRequestFilter implements ClientRequestFilter {

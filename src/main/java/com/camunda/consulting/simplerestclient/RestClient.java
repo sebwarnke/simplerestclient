@@ -113,11 +113,6 @@ public class RestClient {
     return this;
   }
 
-  /**
-   * Just a setter.
-   * 
-   * @param headers
-   */
   public void setHeaders(Map<String, Object> headers) {
     this.headers = new MultivaluedHashMap<>(headers);
   }
@@ -129,7 +124,7 @@ public class RestClient {
    * @param endpoint
    *          the URI path, relative to {@code restUri}, the request is to be
    *          sent to.
-   * @return
+   * @return request
    */
   public Request newRequest(String endpoint) {
     Request request = new Request(endpoint);
@@ -146,7 +141,7 @@ public class RestClient {
    *          sent to.
    * @param body
    *          the body which is to be sent in the request
-   * @return
+   * @return request
    */
   public RequestWithBody newRequestWithBody(String endpoint, Serializable body) {
     RequestWithBody request = new RequestWithBody(endpoint, body);
@@ -168,7 +163,7 @@ public class RestClient {
    *          sent to.
    * @param dataTemplate
    *          the object which is used to be create URL-encoded data from.
-   * @return
+   * @return request
    */
   public RequestWithUrlEncodedData newRequestWithUrlEncodedData(String endpoint, Serializable dataTemplate) {
     RequestWithUrlEncodedData request = new RequestWithUrlEncodedData(endpoint);
@@ -199,6 +194,8 @@ public class RestClient {
    *          The request to be sent.
    * @param entityType
    *          The data type of the response's entity.
+   * @param <T>
+   *          entity class
    * @return a response object containing unmarshalled data
    */
   public <T extends Serializable> ResponseWithBody<T> get(Request request, Class<T> entityType) {
@@ -256,6 +253,8 @@ public class RestClient {
    *          The request to be sent.
    * @param entityType
    *          The data type of the response's entity.
+   * @param <T>
+   *          entity class
    * @return a response object containing unmarshalled data
    */
   public <T extends Serializable> ResponseWithBody<T> post(RequestWithUrlEncodedData request, Class<T> entityType) {
@@ -273,6 +272,8 @@ public class RestClient {
    *          The request to be sent.
    * @param entityType
    *          The data type of the response's entity.
+   * @param <T>
+   *          entity class
    * @return a response object containing unmarshalled data
    */
   public <T extends Serializable> ResponseWithBody<T> post(RequestWithBody request, Class<T> entityType) {

@@ -33,7 +33,6 @@ public class RequestWithBody extends Request {
    *          entire path of the request's destination
    * @param body
    *          the entity body
-   * @see {@link RequestWithBody#RequestWithBody(String, Serializable, ObjectMapper)}
    */
   public RequestWithBody(String endPoint, Serializable body) {
     super(endPoint);
@@ -43,7 +42,7 @@ public class RequestWithBody extends Request {
   /**
    * Constructor.
    * 
-   * @param endPoint
+   * @param endpoint
    *          This can be the first path element after the rest uri or the
    *          entire path of the request's destination
    * @param body

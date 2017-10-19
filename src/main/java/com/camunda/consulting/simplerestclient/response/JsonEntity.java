@@ -32,7 +32,7 @@ public class JsonEntity {
    * Constructor that checks if the received {@code jsonString} contains a
    * {@link JSONArray} or a {@link JSONObject}.
    * 
-   * @param jsonString
+   * @param jsonString String to be used to parse JsonEntity from.
    */
   public JsonEntity(String jsonString) {
 

@@ -19,7 +19,7 @@ public class RequestWithUrlEncodedData extends Request {
   /**
    * Constructor.
    * 
-   * @param restEndPoint
+   * @param endPoint
    *          This can be the first path element after the rest uri or the
    *          entire path of the request's destination
    */
