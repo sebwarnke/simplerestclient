@@ -48,7 +48,7 @@ public class RequestWithBody extends Request {
    * @param body
    *          the entity body
    * @param customMapper
-   *          the mapper to be used to marshall {@body}
+   *          the mapper to be used to marshall {@code body}
    */
   public RequestWithBody(String endpoint, Serializable body, ObjectMapper customMapper) {
     super(endpoint);

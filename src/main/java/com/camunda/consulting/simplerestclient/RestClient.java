@@ -85,8 +85,8 @@ public class RestClient {
   /**
    * This adds an header key value pair to the rest client's default headers.
    * 
-   * @param key
-   * @param value
+   * @param key header key
+   * @param value header value
    * @return this
    */
   public RestClient header(String key, String value) {
