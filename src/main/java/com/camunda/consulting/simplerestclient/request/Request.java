@@ -1,7 +1,5 @@
 package com.camunda.consulting.simplerestclient.request;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -44,12 +42,22 @@ public class Request {
   /**
    * Constructor.
    * 
-   * @param restEndPoint
-   *          This can be the first path element after the rest uri or the
-   *          entire path of the request's destination
+   * @param uriString
+   *          This can be the first path element behind the rest uri or the
+   *          entire path of the request's destination including parameters
+   *          delimited by '?' as well.
    */
-  public Request(String restEndPoint) {
+  public Request(String uriString) {
+
+    String[] split = uriString.split("\\?");
+    String restEndPoint = split[0];
     this.paths.add(new Path(restEndPoint));
+
+    if (split.length > 1) {
+      String parameterString = split[1];
+      Map<String, String> parameters = parseStringToMap(parameterString);
+      this.parameters.putAll(parameters);
+    }
   }
 
   /**
@@ -151,9 +159,28 @@ public class Request {
       requestString += path.toString();
     }
 
-    requestString += assembleParameters(parameters);
+    // requestString += assembleParameters(parameters);
 
     return requestString;
+  }
+
+  /**
+   * Returns a String that shows how the parameters contained in this Request
+   * will be arranged in the actual HTTP request.
+   * 
+   * @return HTTP request parameter preview
+   */
+  public String getParameterPreview() {
+    return assembleParameters(parameters);
+  }
+
+  /**
+   * Getter
+   * 
+   * @return the parameters defined
+   */
+  public Map<String, String> getParameters() {
+    return parameters;
   }
 
   /**
@@ -164,7 +191,8 @@ public class Request {
    * [URI]?{key}={value}&{key}={value}...
    * </pre>
    * 
-   * @param parameters parameters to be converted
+   * @param parameters
+   *          parameters to be converted
    * @return url parameter string
    */
   private String assembleParameters(Map<String, String> parameters) {
@@ -182,12 +210,8 @@ public class Request {
         Entry<String, String> mapEntry = parameterIterator.next();
         String parameterKeyValue = mapEntry.getKey() + "=" + mapEntry.getValue();
 
-        try {
-          result += URLEncoder.encode(parameterKeyValue, "utf-8");
-        } catch (UnsupportedEncodingException e) {
-          log.error("cannot url-encode parameter [{}]", parameterKeyValue, e);
-        }
-
+        result += parameterKeyValue;
+        
         if (parameterIterator.hasNext()) {
           result += "&";
         }
@@ -195,7 +219,26 @@ public class Request {
     } else {
       // parameters.size <= 0 -> no uri parameters
     }
-
     return result;
+  }
+
+  /**
+   * Parses a string like {@code key=value&foo=bar} into a map.
+   * 
+   * @param parameterString
+   *          string to be parsed
+   * @return the resulting map
+   */
+  private Map<String, String> parseStringToMap(String parameterString) {
+    Map<String, String> parameters = new HashMap<String, String>();
+
+    String[] keyValuePairs = parameterString.split("&");
+
+    for (String keyValuePair : keyValuePairs) {
+      String[] keyValueArray = keyValuePair.split("=");
+      parameters.put(keyValueArray[0].trim(), keyValueArray[1].trim());
+    }
+
+    return parameters;
   }
 }

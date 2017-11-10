@@ -87,8 +87,10 @@ public class RestClient {
   /**
    * This adds an header key value pair to the rest client's default headers.
    * 
-   * @param key header key
-   * @param value header value
+   * @param key
+   *          header key
+   * @param value
+   *          header value
    * @return this
    */
   public RestClient header(String key, String value) {
@@ -207,7 +209,7 @@ public class RestClient {
 
     return response;
   }
-  
+
   /**
    * This sends a GET request to the REST API located at {@code restUri}.
    * 
@@ -223,11 +225,11 @@ public class RestClient {
 
     ResponseWithBody<T> response = null;
 
-    log.debug("GET Request: {}{}", restUri, request.getPath());
+    log.debug("GET Request: {}{}{}", restUri, request.getPath(), request.getParameterPreview());
     log.debug("... with header information: {}", request.getHeaders());
 
     Builder builder = createInvocationBuilder(request);
-    
+
     javax.ws.rs.core.Response httpResponse = builder.get();
     response = new ResponseWithBody<T>(httpResponse, entityType);
 
@@ -266,10 +268,10 @@ public class RestClient {
   public <T extends Serializable> ResponseWithBody<T> post(RequestWithBody request, Class<T> entityType) {
     JavaType javatype = TypeFactory.defaultInstance().constructParametricType(Class.class, entityType);
     ResponseWithBody<T> response = post(request, javatype);
-  
+
     return response;
   }
-  
+
   /**
    * This sends a POST request to the REST API located at {@code restUri}.
    * 
@@ -284,7 +286,7 @@ public class RestClient {
   public <T extends Serializable> ResponseWithBody<T> post(RequestWithBody request, JavaType entityType) {
     javax.ws.rs.core.Response httpResponse = invokePost(request);
     ResponseWithBody<T> response = newResponseWithBody(httpResponse, entityType);
-  
+
     return response;
   }
 
@@ -317,10 +319,10 @@ public class RestClient {
   public <T extends Serializable> ResponseWithBody<T> post(RequestWithUrlEncodedData request, Class<T> entityType) {
     JavaType javatype = TypeFactory.defaultInstance().constructParametricType(Class.class, entityType);
     ResponseWithBody<T> response = post(request, javatype);
-    
+
     return response;
   }
-  
+
   /**
    * This sends a POST request to the REST API located at {@code restUri}.
    * 
@@ -342,7 +344,7 @@ public class RestClient {
 
   private javax.ws.rs.core.Response invokePost(RequestWithBody request) {
 
-    log.debug("POST Request: {}{}", restUri, request.getPath());
+    log.debug("POST Request: {}{}{}", restUri, request.getPath(), request.getParameterPreview());
     log.debug("... with header information: {}", request.getHeaders());
 
     Builder builder = createInvocationBuilder(request);
@@ -372,7 +374,7 @@ public class RestClient {
 
     Response response = null;
 
-    log.debug("PUT Request: {}{}", restUri, request.getPath());
+    log.debug("PUT Request: {}{}{}", restUri, request.getPath(), request.getParameterPreview());
     log.debug("... with header information: {}", request.getHeaders());
 
     Builder builder = createInvocationBuilder(request);
@@ -394,7 +396,7 @@ public class RestClient {
 
     Response response = null;
 
-    log.debug("PUT Request: {}{}", restUri, request.getPath());
+    log.debug("PUT Request: {}{}{}", restUri, request.getPath(), request.getParameterPreview());
     log.debug("... with header information: {}", request.getHeaders());
 
     Builder builder = createInvocationBuilder(request);
@@ -419,6 +421,11 @@ public class RestClient {
     }
 
     WebTarget fullTarget = target.path(request.getPath());
+    
+    for (Map.Entry<String, String> parameterEntry : request.getParameters().entrySet()) {
+      fullTarget = fullTarget.queryParam(parameterEntry.getKey(), parameterEntry.getValue());
+    }
+    
     Builder builder = fullTarget.request();
 
     // we don't use this.headers because header information could have been
