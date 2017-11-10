@@ -60,7 +60,7 @@ public class ResponseWithBody<T extends Serializable> extends Response {
 
     super(httpResponse);
 
-    this.entityType = TypeFactory.defaultInstance().constructParametricType(Class.class, entityType);
+    this.entityType = TypeFactory.defaultInstance().constructSimpleType(entityType, null);
     this.responseString = httpResponse.readEntity(String.class);
     this.jsonEntity = new JsonEntity(this.responseString);
   }

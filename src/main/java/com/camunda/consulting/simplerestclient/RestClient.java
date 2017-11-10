@@ -204,7 +204,7 @@ public class RestClient {
    */
   public <T extends Serializable> ResponseWithBody<T> get(Request request, Class<T> entityType) {
 
-    JavaType javatype = TypeFactory.defaultInstance().constructParametricType(Class.class, entityType);
+    JavaType javatype = TypeFactory.defaultInstance().constructSimpleType(entityType, null);
     ResponseWithBody<T> response = this.get(request, javatype);
 
     return response;
@@ -266,7 +266,7 @@ public class RestClient {
    * @return a response object containing unmarshalled data
    */
   public <T extends Serializable> ResponseWithBody<T> post(RequestWithBody request, Class<T> entityType) {
-    JavaType javatype = TypeFactory.defaultInstance().constructParametricType(Class.class, entityType);
+    JavaType javatype = TypeFactory.defaultInstance().constructSimpleType(entityType, null);
     ResponseWithBody<T> response = post(request, javatype);
 
     return response;
@@ -317,7 +317,7 @@ public class RestClient {
    * @return a response object containing unmarshalled data
    */
   public <T extends Serializable> ResponseWithBody<T> post(RequestWithUrlEncodedData request, Class<T> entityType) {
-    JavaType javatype = TypeFactory.defaultInstance().constructParametricType(Class.class, entityType);
+    JavaType javatype = TypeFactory.defaultInstance().constructSimpleType(entityType, null);
     ResponseWithBody<T> response = post(request, javatype);
 
     return response;
