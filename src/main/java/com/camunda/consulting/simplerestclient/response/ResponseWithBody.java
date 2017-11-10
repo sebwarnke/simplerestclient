@@ -11,7 +11,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.camunda.consulting.simplerestclient.exceptions.RestClientException;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 
 /**
  * This class represents the response to a REST request. The response is
@@ -29,7 +31,7 @@ public class ResponseWithBody<T extends Serializable> extends Response {
   /**
    * The expected entity type.
    */
-  private final Class<T> entityType;
+  private final JavaType entityType;
 
   /**
    * The mapper that is used to unmarshall the entity body.
@@ -55,6 +57,23 @@ public class ResponseWithBody<T extends Serializable> extends Response {
    *          The type the entity body is to be unmarshalled to
    */
   public ResponseWithBody(javax.ws.rs.core.Response httpResponse, Class<T> entityType) {
+
+    super(httpResponse);
+
+    this.entityType = TypeFactory.defaultInstance().constructParametricType(Class.class, entityType);
+    this.responseString = httpResponse.readEntity(String.class);
+    this.jsonEntity = new JsonEntity(this.responseString);
+  }
+  
+  /**
+   * Constructor.
+   * 
+   * @param httpResponse
+   *          HTTP response received from REST API
+   * @param entityType
+   *          The type the entity body is to be unmarshalled to
+   */
+  public ResponseWithBody(javax.ws.rs.core.Response httpResponse, JavaType entityType) {
 
     super(httpResponse);
 
@@ -99,6 +118,7 @@ public class ResponseWithBody<T extends Serializable> extends Response {
     T result;
     String jsonString = bodyJsonObject.toString();
     result = objectMapper.readValue(jsonString, entityType);
+    
     return result;
   }
 
@@ -112,8 +132,8 @@ public class ResponseWithBody<T extends Serializable> extends Response {
     try {
       resultList = parse(jsonEntity);
     } catch (IOException e) {
-      log.error("cannot unmarshall response to type <" + this.entityType.getSimpleName() + ">: {}", e.getMessage());
-      throw new RestClientException("cannot unmarshall response to type <" + this.entityType.getSimpleName() + ">", e);
+      log.error("cannot unmarshall response to type <" + this.entityType.getTypeName() + ">: {}", e.getMessage());
+      throw new RestClientException("cannot unmarshall response to type <" + this.entityType.getTypeName() + ">", e);
     }
 
     return resultList;

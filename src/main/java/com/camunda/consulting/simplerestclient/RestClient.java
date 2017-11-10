@@ -30,7 +30,9 @@ import com.camunda.consulting.simplerestclient.response.ResponseWithBody;
 import com.camunda.consulting.simplerestclient.util.CookieClientRequestFilter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 
 /**
  * This is the Rest Client representation for requests to a certain REST API.
@@ -177,7 +179,7 @@ public class RestClient {
     return request;
   }
 
-  private <T extends Serializable> ResponseWithBody<T> newResponseWithBody(javax.ws.rs.core.Response httpResponse, Class<T> returnType) {
+  private <T extends Serializable> ResponseWithBody<T> newResponseWithBody(javax.ws.rs.core.Response httpResponse, JavaType returnType) {
     ResponseWithBody<T> response = new ResponseWithBody<T>(httpResponse, returnType);
 
     if (responseMapper != null) {
@@ -200,13 +202,32 @@ public class RestClient {
    */
   public <T extends Serializable> ResponseWithBody<T> get(Request request, Class<T> entityType) {
 
+    JavaType javatype = TypeFactory.defaultInstance().constructParametricType(Class.class, entityType);
+    ResponseWithBody<T> response = this.get(request, javatype);
+
+    return response;
+  }
+  
+  /**
+   * This sends a GET request to the REST API located at {@code restUri}.
+   * 
+   * @param request
+   *          The request to be sent.
+   * @param entityType
+   *          The data type of the response's entity.
+   * @param <T>
+   *          entity class
+   * @return a response object containing unmarshalled data
+   */
+  public <T extends Serializable> ResponseWithBody<T> get(Request request, JavaType entityType) {
+
     ResponseWithBody<T> response = null;
 
     log.debug("GET Request: {}{}", restUri, request.getPath());
     log.debug("... with header information: {}", request.getHeaders());
 
     Builder builder = createInvocationBuilder(request);
-
+    
     javax.ws.rs.core.Response httpResponse = builder.get();
     response = new ResponseWithBody<T>(httpResponse, entityType);
 
@@ -236,6 +257,42 @@ public class RestClient {
    * 
    * @param request
    *          The request to be sent.
+   * @param entityType
+   *          The data type of the response's entity.
+   * @param <T>
+   *          entity class
+   * @return a response object containing unmarshalled data
+   */
+  public <T extends Serializable> ResponseWithBody<T> post(RequestWithBody request, Class<T> entityType) {
+    JavaType javatype = TypeFactory.defaultInstance().constructParametricType(Class.class, entityType);
+    ResponseWithBody<T> response = post(request, javatype);
+  
+    return response;
+  }
+  
+  /**
+   * This sends a POST request to the REST API located at {@code restUri}.
+   * 
+   * @param request
+   *          The request to be sent.
+   * @param entityType
+   *          The data type of the response's entity.
+   * @param <T>
+   *          entity class
+   * @return a response object containing unmarshalled data
+   */
+  public <T extends Serializable> ResponseWithBody<T> post(RequestWithBody request, JavaType entityType) {
+    javax.ws.rs.core.Response httpResponse = invokePost(request);
+    ResponseWithBody<T> response = newResponseWithBody(httpResponse, entityType);
+  
+    return response;
+  }
+
+  /**
+   * This sends a POST request to the REST API located at {@code restUri}.
+   * 
+   * @param request
+   *          The request to be sent.
    * @return a response object
    */
   public Response post(RequestWithUrlEncodedData request) {
@@ -247,7 +304,7 @@ public class RestClient {
   }
 
   /**
-   * This sends a GET request to the REST API located at {@code restUri}.
+   * This sends a POST request to the REST API located at {@code restUri}.
    * 
    * @param request
    *          The request to be sent.
@@ -258,15 +315,14 @@ public class RestClient {
    * @return a response object containing unmarshalled data
    */
   public <T extends Serializable> ResponseWithBody<T> post(RequestWithUrlEncodedData request, Class<T> entityType) {
-    Builder builder = createInvocationBuilder(request);
-    javax.ws.rs.core.Response httpResponse = builder.post(Entity.entity(request.getUrlEncodedData(), MediaType.APPLICATION_FORM_URLENCODED_TYPE));
-    ResponseWithBody<T> response = new ResponseWithBody<T>(httpResponse, entityType);
-
+    JavaType javatype = TypeFactory.defaultInstance().constructParametricType(Class.class, entityType);
+    ResponseWithBody<T> response = post(request, javatype);
+    
     return response;
   }
-
+  
   /**
-   * This sends a GET request to the REST API located at {@code restUri}.
+   * This sends a POST request to the REST API located at {@code restUri}.
    * 
    * @param request
    *          The request to be sent.
@@ -276,9 +332,10 @@ public class RestClient {
    *          entity class
    * @return a response object containing unmarshalled data
    */
-  public <T extends Serializable> ResponseWithBody<T> post(RequestWithBody request, Class<T> entityType) {
-    javax.ws.rs.core.Response httpResponse = invokePost(request);
-    ResponseWithBody<T> response = newResponseWithBody(httpResponse, entityType);
+  public <T extends Serializable> ResponseWithBody<T> post(RequestWithUrlEncodedData request, JavaType entityType) {
+    Builder builder = createInvocationBuilder(request);
+    javax.ws.rs.core.Response httpResponse = builder.post(Entity.entity(request.getUrlEncodedData(), MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+    ResponseWithBody<T> response = new ResponseWithBody<T>(httpResponse, entityType);
 
     return response;
   }
