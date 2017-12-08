@@ -413,6 +413,14 @@ public class RestClient {
 
     return response;
   }
+  
+  public Response put(RequestWithUrlEncodedData request) {
+    Builder builder = createInvocationBuilder(request);
+    javax.ws.rs.core.Response httpResponse = builder.put(Entity.entity(request.getUrlEncodedData(), MediaType.APPLICATION_FORM_URLENCODED_TYPE));
+    Response response = new Response(httpResponse);
+
+    return response;
+  }
 
   private Builder createInvocationBuilder(Request request) {
 
