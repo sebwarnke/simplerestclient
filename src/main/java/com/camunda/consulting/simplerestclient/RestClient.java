@@ -413,7 +413,7 @@ public class RestClient {
 
     return response;
   }
-  
+
   public Response put(RequestWithUrlEncodedData request) {
     Builder builder = createInvocationBuilder(request);
     javax.ws.rs.core.Response httpResponse = builder.put(Entity.entity(request.getUrlEncodedData(), MediaType.APPLICATION_FORM_URLENCODED_TYPE));
@@ -421,11 +421,11 @@ public class RestClient {
 
     return response;
   }
-  
+
   public Response delete(Request request) {
-   
+
     Response response = null;
-    
+
     log.debug("DELETE Request: {}{}{}", restUri, request.getPath(), request.getParameterPreview());
     log.debug("... with header information: {}", request.getHeaders());
 
@@ -433,7 +433,7 @@ public class RestClient {
 
     javax.ws.rs.core.Response httpResponse = builder.delete();
     response = new Response(httpResponse);
-    
+
     return response;
   }
 
@@ -444,11 +444,11 @@ public class RestClient {
     }
 
     WebTarget fullTarget = target.path(request.getPath());
-    
+
     for (Map.Entry<String, String> parameterEntry : request.getParameters().entrySet()) {
       fullTarget = fullTarget.queryParam(parameterEntry.getKey(), parameterEntry.getValue());
     }
-    
+
     Builder builder = fullTarget.request();
 
     // we don't use this.headers because header information could have been

@@ -39,11 +39,6 @@ public class ResponseWithBody<T extends Serializable> extends Response {
   private ObjectMapper objectMapper = new ObjectMapper();
 
   /**
-   * The response as String
-   */
-  protected final String responseString;
-
-  /**
    * The entity body.
    */
   private final JsonEntity jsonEntity;
@@ -61,8 +56,7 @@ public class ResponseWithBody<T extends Serializable> extends Response {
     super(httpResponse);
 
     this.entityType = TypeFactory.defaultInstance().constructSimpleType(entityType, null);
-    this.responseString = httpResponse.readEntity(String.class);
-    this.jsonEntity = new JsonEntity(this.responseString);
+    this.jsonEntity = new JsonEntity(this.getRawResponseEntityString());
   }
   
   /**
@@ -78,8 +72,7 @@ public class ResponseWithBody<T extends Serializable> extends Response {
     super(httpResponse);
 
     this.entityType = entityType;
-    this.responseString = httpResponse.readEntity(String.class);
-    this.jsonEntity = new JsonEntity(this.responseString);
+    this.jsonEntity = new JsonEntity(this.getRawResponseEntityString());
   }
 
   /**
@@ -163,9 +156,5 @@ public class ResponseWithBody<T extends Serializable> extends Response {
 
   public void setCustomMapper(ObjectMapper customMapper) {
     this.objectMapper = customMapper;
-  }
-
-  public String getResponseString() {
-    return responseString;
   }
 }
