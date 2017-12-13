@@ -421,6 +421,21 @@ public class RestClient {
 
     return response;
   }
+  
+  public Response delete(Request request) {
+   
+    Response response = null;
+    
+    log.debug("DELETE Request: {}{}{}", restUri, request.getPath(), request.getParameterPreview());
+    log.debug("... with header information: {}", request.getHeaders());
+
+    Builder builder = createInvocationBuilder(request);
+
+    javax.ws.rs.core.Response httpResponse = builder.delete();
+    response = new Response(httpResponse);
+    
+    return response;
+  }
 
   private Builder createInvocationBuilder(Request request) {
 
