@@ -1,12 +1,15 @@
 package com.camunda.consulting.simplerestclient;
 
+import java.io.InputStream;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -83,6 +86,25 @@ public class RestClient {
     this.restUri = restUri;
     this.target = client.target(this.restUri);
   }
+  
+  /**
+   * Constructor
+   * 
+   * @param restUri
+   *          URI to the location of the REST API
+   */
+  public RestClient(String restUri, String keystoreLocation, String keystorePassword) throws RestClientException {
+
+    Optional<KeyStore> keystore = readKeystore(keystoreLocation, keystorePassword);
+    
+    if (keystore.isPresent()) {
+      this.client = ClientBuilder.newBuilder().keyStore(keystore.get(), keystorePassword).build();
+      this.restUri = restUri;
+      this.target = client.target(this.restUri);
+    } else {
+      throw new RestClientException("KeyStore from ["+keystoreLocation+"] was null.");
+    }
+  }
 
   /**
    * This adds an header key value pair to the rest client's default headers.
@@ -119,6 +141,27 @@ public class RestClient {
 
   public void setHeaders(Map<String, Object> headers) {
     this.headers = new MultivaluedHashMap<>(headers);
+  }
+
+  private Optional<KeyStore> readKeystore(String keystoreLocation, String keystorePassword) throws RestClientException {
+
+    KeyStore keystore = null;
+
+    InputStream keyStoreStream = this.getClass().getResourceAsStream(keystoreLocation);
+
+    if (keyStoreStream == null) {
+      log.error("keyStoreStream was null.");
+    } else {
+
+      try {
+        keystore = KeyStore.getInstance("PKCS12"); // or "PKCS12"
+        keystore.load(keyStoreStream, keystorePassword.toCharArray());
+      } catch (Exception e) {
+        throw new RestClientException("Cannot create KeyStore from [" + keystoreLocation + "].", e);
+      }
+    }
+    
+    return Optional.of(keystore);
   }
 
   /**
@@ -206,6 +249,27 @@ public class RestClient {
 
     JavaType javatype = TypeFactory.defaultInstance().constructSimpleType(entityType, null);
     ResponseWithBody<T> response = this.get(request, javatype);
+
+    return response;
+  }
+
+  /**
+   * This sends a GET request to the REST API located at {@code restUri}.
+   * 
+   * @param request
+   *          The request to be sent.
+   */
+  public Response get(Request request) {
+
+    Response response = null;
+
+    log.debug("GET Request: {}{}{}", restUri, request.getPath(), request.getParameterPreview());
+    log.debug("... with header information: {}", request.getHeaders());
+
+    Builder builder = createInvocationBuilder(request);
+
+    javax.ws.rs.core.Response httpResponse = builder.get();
+    response = new Response(httpResponse);
 
     return response;
   }
